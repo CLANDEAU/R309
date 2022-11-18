@@ -64,4 +64,4 @@ if __name__=='__main__':
         print(f"La moyenne de temp pour le Pool est de {round(sum(list_pool) / len(list_pool),2)}")
         print(f"La moyenne de temp pour le Multiprccessus est de {round(sum(list_multiproc) / len(list_multiproc),2)}")
     except:
-        print("Veuillez entrez une valeur correcte")
+        print("Veuillez entrez une valeur correcte.")
