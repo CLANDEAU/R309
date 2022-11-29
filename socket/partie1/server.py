@@ -23,6 +23,10 @@ if __name__=='__main__':
                 if reply == "bye":
                     conn.send(reply.encode())
                     conn, address = server_socket.accept()
+                elif reply == "arret":
+                    print("Arret du serv")
+                    com = False
+                    conn.close()
                 else:
                     conn.send(reply.encode())
     except:
