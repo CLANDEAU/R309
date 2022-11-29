@@ -1,5 +1,6 @@
 import socket
 import threading
+import subprocess
 
 class Socket:
     def __init__(self,host="127.0.0.1",port=8000):
@@ -19,12 +20,15 @@ class Socket:
                 com = False
                 self.__client_socket.send(message.encode())
             elif message == "reset":
-                print("pas encore en action")
+                self.__client_socket.send(message.encode())
             else:
                 self.__client_socket.send(message.encode())
-                data = self.__client_socket.recv(1024).decode()
+                data = self.__client_socket.recv(32000).decode()
                 if data == "disconnect":
                     com = False
+                elif data == "ping 192.157.65.78":
+                    print("Voici le résultat de la commmande ping 192.157.65.78:")
+                    subprocess.Popen('ping 192.157.65.78')
                 else:
                     print(data)
 
