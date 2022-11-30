@@ -5,13 +5,11 @@ import subprocess
 import os,sys
 
 def restart():
-    print("argv was", sys.argv)
-    print("sys.executable was", sys.executable)
     print("restart now")
     os.execv(sys.executable, ['python'] + sys.argv)
 
 host="127.0.0.1"
-port= 8005
+port= 8006
 com=True
 server_socket = socket.socket()
 server_socket.bind((host, port))

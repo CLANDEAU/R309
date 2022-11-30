@@ -4,11 +4,11 @@ import subprocess
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWidgets import *
 import sys
-from PyQt5.QtWidgets import QApplication
+
 
 class Socket:
-    def __init__(self,host="127.0.0.1",port=8005):
-        self.__host=host
+    def __init__(self,host,port):
+        self.__host = host
         self.__port = port
         self.__client_socket = socket.socket()
         message = "Connecté"
@@ -17,6 +17,10 @@ class Socket:
         return self.__message
     def set_msg(self,msg):
         self.__message = msg
+    def set_host(self,host):
+        self.__host = host
+    def set_port(self,port):
+        self.__port = port
     def connect(self):
         self.__client_socket.connect((self.__host, self.__port))
     def echange(self,message):
@@ -41,50 +45,53 @@ class Socket:
             else:
                 return data
 
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.i = 0
         widget = QWidget()
         self.setCentralWidget(widget)
 
         grid = QGridLayout()
         widget.setLayout(grid)
+        self.setWindowTitle("Gestionnaire de server")
+        self.setGeometry(0, 0, 1500, 900)
 
-        self.setGeometry(0, 0, 1920, 1080)
-        self.__print = QLineEdit("print")
-        self.setWindowTitle("Charles")
-        self.__ter=QLabel("")
+        self.__print = QLineEdit("Powershell:get-process")
+        self.__ter = QTextEdit()
+        self.__conn = QPushButton("Se connecter au server")
+        self.__send = QPushButton("Envoyez le message au server")
+        self.__send.setEnabled(False)
+        self.__ip2 = QLabel("Entrez l'adresse IP de la machine:")
+        self.__ip1 = QLineEdit("127.0.0.1")
+        self.__port2 = QLabel("Entrez le port de la machine:")
+        self.__port1 = QLineEdit("8006")
 
-        grid.addWidget(self.__print, 0, 0)
-        grid.addWidget(self.__ter, 0, 1)
-        self.__conv = QPushButton("Se connecter")
-        self.__conv.clicked.connect(self.connection)
-        self.__send = QPushButton("Envoyer")
-        grid.addWidget(self.__conv, 1, 0)
+        grid.addWidget(self.__print, 0,0 , 1,6)
+        grid.addWidget(self.__ter, 1,0 , 1,6)
+        grid.addWidget(self.__ip1, 2,1 , 1,1)
+        grid.addWidget(self.__ip2, 2,0 , 1,1)
+        grid.addWidget(self.__port1, 2,4 , 1,1)
+        grid.addWidget(self.__port2, 2,3 , 1, 1)
+        grid.addWidget(self.__conn, 3,0 , 1,3)
+        grid.addWidget(self.__send, 3,3 , 1,3)
+
         self.__send.clicked.connect(self.send)
-        grid.addWidget(self.__send, 1, 1)
+        self.__conn.clicked.connect(self.connection)
     def connection(self):
-        self.__soc=Socket()
+        port = int(self.__port1.text())
+        host = str(self.__ip1.text())
+        self.__soc = Socket(host,port)
         self.__soc.connect()
+        self.__send.setEnabled(True)
     def send(self):
         msg=Socket.set_msg(self.__soc,self.__print.text())
-        self.__ter.setText(Socket.echange(self.__soc, msg))
+        #self.__ter.setText(Socket.echange(self.__soc, msg))
+        self.__ter.append(Socket.echange(self.__soc,msg))
+        self.i += 1
+
 app = QApplication(sys.argv)
 window = MainWindow()
 window.show()
 app.exec()
-
-
-
-
-
-"""
-
-socket1=Socket()
-echange = threading.Thread(target=socket1.echange)
-echange.start()
-echange.join()
-
-args=[Socket.get_msg]
-"""
