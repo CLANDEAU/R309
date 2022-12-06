@@ -1,10 +1,9 @@
 import socket
 import threading
 import subprocess
-from PyQt5.QtCore import QCoreApplication
+from PyQt5 import QtCore , QtGui,QtWidgets
 from PyQt5.QtWidgets import *
 import sys
-
 
 class Socket:
     def __init__(self,host,port):
@@ -13,8 +12,14 @@ class Socket:
         self.__client_socket = socket.socket()
         message = "Connecté"
         self.__message = message
+        self.__com = True
+
     def get_msg(self):
         return self.__message
+    def get_com(self):
+        return self.__com
+    def set_com(self,com):
+        self.__com = com
     def set_msg(self,msg):
         self.__message = msg
     def set_host(self,host):
@@ -23,42 +28,29 @@ class Socket:
         self.__port = port
     def connect(self):
         self.__client_socket.connect((self.__host, self.__port))
-    def echange(self,message):
-        com = True
-        #message = input("Message envoyé=")
-        if self.__message == "disconnect":
-            com = False
-            self.__client_socket.send(self.__message.encode())
-        elif self.__message == "kill":
-            com = False
-            self.__client_socket.send(self.__message.encode())
-        elif self.__message == "reset":
-            self.__client_socket.send(self.__message.encode())
+    def send(self,message):
+        self.__client_socket.send(message.encode())
+        data = self.__client_socket.recv(100000).decode()
+        if data == "disconnect":
+            self.__com= False
+        elif data == "ping 192.157.65.78":
+            print("Voici le résultat de la commmande ping 192.157.65.78:")
+            print(subprocess.Popen('ping 192.157.65.78'))
         else:
-            self.__client_socket.send(self.__message.encode())
-            data = self.__client_socket.recv(100000).decode()
-            if data == "disconnect":
-                com = False
-            elif data == "ping 192.157.65.78":
-                print("Voici le résultat de la commmande ping 192.157.65.78:")
-                print(subprocess.Popen('ping 192.157.65.78'))
-            else:
-                return data
+            return data
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
-        self.i = 0
         widget = QWidget()
         self.setCentralWidget(widget)
 
         grid = QGridLayout()
         widget.setLayout(grid)
         self.setWindowTitle("Gestionnaire de server")
-        self.setGeometry(0, 0, 1500, 900)
+        self.setGeometry(0, 0, 400,400)
 
-        self.__print = QLineEdit("Powershell:get-process")
+        self.__print = QLineEdit("OS") #Powershell:get-process
         self.__ter = QTextEdit()
         self.__conn = QPushButton("Se connecter au server")
         self.__send = QPushButton("Envoyez le message au server")
@@ -67,6 +59,10 @@ class MainWindow(QMainWindow):
         self.__ip1 = QLineEdit("127.0.0.1")
         self.__port2 = QLabel("Entrez le port de la machine:")
         self.__port1 = QLineEdit("8006")
+        self.__add = QPushButton("Ajouter un server")
+        self.__msgBox = QMessageBox()
+        self.__msgBox.setText("Permet de convertir un nombre soit de Kelvin vers Celcius, soit de Celcius vers Kelvin")
+        self.__msgBox.setWindowTitle("Aide")
 
         grid.addWidget(self.__print, 0,0 , 1,6)
         grid.addWidget(self.__ter, 1,0 , 1,6)
@@ -76,6 +72,7 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.__port2, 2,3 , 1, 1)
         grid.addWidget(self.__conn, 3,0 , 1,3)
         grid.addWidget(self.__send, 3,3 , 1,3)
+        grid.addWidget(self.__add, 4, 0, 1,6)
 
         self.__send.clicked.connect(self.send)
         self.__conn.clicked.connect(self.connection)
@@ -86,12 +83,22 @@ class MainWindow(QMainWindow):
         self.__soc.connect()
         self.__send.setEnabled(True)
     def send(self):
-        msg=Socket.set_msg(self.__soc,self.__print.text())
-        #self.__ter.setText(Socket.echange(self.__soc, msg))
-        self.__ter.append(Socket.echange(self.__soc,msg))
-        self.i += 1
+        Socket.set_msg(self.__soc, self.__print.text())
+        msg = Socket.get_msg(self.__soc)
+        thread = threading.Thread(target=Socket.send, args=[self.__soc,msg])
+        thread.start()
+        self.__ter.append(Socket.send(self.__soc,msg))
+        thread.join()
+        if msg == "clear":
+            self.__ter.clear()
+list=[]
+nb=int(input("A comien de server voulez-vous vous connecter: "))
+for i in range(nb):
+    name = str(input(f"Veuillez nommer votre server n°{i+1}: "))
+    list.append(name)
 
 app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
+for i in range(len(list)):
+    list[i] = MainWindow()
+    list[i].show()
 app.exec()

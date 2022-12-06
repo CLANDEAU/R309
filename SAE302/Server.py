@@ -20,11 +20,13 @@ while com:
     data = conn.recv(1024).decode()
     OS = platform.uname()
     if data == "disconnect":
-        print(f"Message reçu= {data}")
         conn, address = server_socket.accept()
-    if data == "reset":
+    elif data == "reset":
         restart()
+    elif data == "clear":
+        conn.send("clear".encode())
     elif data == "OS":
+        print(f"{OS[0]}")
         conn.send(f"La machine utilise le système d'exploitation: {OS[0]}".encode())
     elif data == "RAM":
         RAM = psutil.virtual_memory()

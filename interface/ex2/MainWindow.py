@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
         self.__msgBox2 = QMessageBox()
         self.__msgBox2.setText("Erreur, il faut entrer un float.")
         self.__msgBox2.setWindowTitle("Erreur")
+
         grid.addWidget(self.__temp, 0, 0)
         grid.addWidget(self.__temp2, 0, 2)
         grid.addWidget(self.__text, 0,1)
@@ -37,7 +38,6 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.__temp3, 2, 0)
         grid.addWidget(self.__temp4, 2, 2)
         grid.addWidget(self.__interrogation, 3, 3)
-
 
         self.__conv.clicked.connect(self._actionConv)
         self.__interrogation.clicked.connect(self._actionInterrogation)
