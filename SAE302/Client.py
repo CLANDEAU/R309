@@ -12,14 +12,9 @@ class Socket:
         self.__client_socket = socket.socket()
         message = "Connecté"
         self.__message = message
-        self.__com = True
 
     def get_msg(self):
         return self.__message
-    def get_com(self):
-        return self.__com
-    def set_com(self,com):
-        self.__com = com
     def set_msg(self,msg):
         self.__message = msg
     def set_host(self,host):
@@ -44,10 +39,11 @@ class MainWindow(QMainWindow):
         super().__init__()
         widget = QWidget()
         self.setCentralWidget(widget)
-
+        title=""
+        self.__title = title
         grid = QGridLayout()
         widget.setLayout(grid)
-        self.setWindowTitle("Gestionnaire de server")
+        self.setWindowTitle(self.__title)
         self.setGeometry(0, 0, 400,400)
 
         self.__print = QLineEdit("OS") #Powershell:get-process
@@ -91,14 +87,20 @@ class MainWindow(QMainWindow):
         thread.join()
         if msg == "clear":
             self.__ter.clear()
+    def set_title(self,title):
+        self.setWindowTitle(title)
+
 list=[]
 nb=int(input("A comien de server voulez-vous vous connecter: "))
 for i in range(nb):
     name = str(input(f"Veuillez nommer votre server n°{i+1}: "))
     list.append(name)
-
+c=-500
 app = QApplication(sys.argv)
 for i in range(len(list)):
+    c += 600
     list[i] = MainWindow()
+    list[i].setGeometry(c,100,400,400)
+    list[i].set_title(f"Server n°{i+1}")
     list[i].show()
 app.exec()

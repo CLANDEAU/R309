@@ -9,7 +9,7 @@ def restart():
     os.execv(sys.executable, ['python'] + sys.argv)
 
 host="127.0.0.1"
-port= 8006
+port= 8007
 com=True
 server_socket = socket.socket()
 server_socket.bind((host, port))
@@ -26,7 +26,6 @@ while com:
     elif data == "clear":
         conn.send("clear".encode())
     elif data == "OS":
-        print(f"{OS[0]}")
         conn.send(f"La machine utilise le système d'exploitation: {OS[0]}".encode())
     elif data == "RAM":
         RAM = psutil.virtual_memory()
