@@ -22,17 +22,26 @@ class Socket:
     def set_port(self,port):
         self.__port = port
     def connect(self):
-        self.__client_socket.connect((self.__host, self.__port))
-    def send(self,message):
-        self.__client_socket.send(message.encode())
-        data = self.__client_socket.recv(100000).decode()
-        if data == "disconnect":
-            self.__com= False
-        elif data == "ping 192.157.65.78":
-            print("Voici le résultat de la commmande ping 192.157.65.78:")
-            print(subprocess.Popen('ping 192.157.65.78'))
+        try:
+            self.__client_socket.connect((self.__host, self.__port))
+        except:
+            print("connexion error")
         else:
-            return data
+            self.__client_socket.send("connected".encode())
+    def send(self,message):
+        try:
+            self.__client_socket.send(message.encode())
+            data = self.__client_socket.recv(100000).decode()
+        except:
+            print("Problem")
+        else:
+            if data == "disconnect":
+                self.__com= False
+            elif data == "ping 192.157.65.78":
+                print("Voici le résultat de la commmande ping 192.157.65.78:")
+                print(subprocess.Popen('ping 192.157.65.78'))
+            else:
+                return data
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -78,8 +87,13 @@ class MainWindow(QMainWindow):
         self.__soc = Socket(host,port)
         self.__soc.connect()
         self.__send.setEnabled(True)
+        msg = Socket.get_msg(self.__soc)
+        self.__ter.append(Socket.send(self.__soc, msg))
     def send(self):
-        Socket.set_msg(self.__soc, self.__print.text())
+        try:
+            Socket.set_msg(self.__soc, self.__print.text())
+        except BrokenPipeError:
+            print("socket closed")
         msg = Socket.get_msg(self.__soc)
         thread = threading.Thread(target=Socket.send, args=[self.__soc,msg])
         thread.start()
