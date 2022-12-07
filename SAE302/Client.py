@@ -10,7 +10,7 @@ class Socket:
         self.__host = host
         self.__port = port
         self.__client_socket = socket.socket()
-        message = "Connecté"
+        message ="xetyauibeabfa"
         self.__message = message
 
     def get_msg(self):
@@ -25,19 +25,17 @@ class Socket:
         try:
             self.__client_socket.connect((self.__host, self.__port))
         except:
-            print("connexion error")
+            self.__message="erreur de connexion"
         else:
-            self.__client_socket.send("connected".encode())
+            return True
     def send(self,message):
         try:
             self.__client_socket.send(message.encode())
             data = self.__client_socket.recv(100000).decode()
         except:
-            print("Problem")
+            self.__message="Erreur de connexion"
         else:
-            if data == "disconnect":
-                self.__com= False
-            elif data == "ping 192.157.65.78":
+            if data == "ping 192.157.65.78":
                 print("Voici le résultat de la commmande ping 192.157.65.78:")
                 print(subprocess.Popen('ping 192.157.65.78'))
             else:
@@ -65,19 +63,16 @@ class MainWindow(QMainWindow):
         self.__port2 = QLabel("Entrez le port de la machine:")
         self.__port1 = QLineEdit("8006")
         self.__add = QPushButton("Ajouter un server")
-        self.__msgBox = QMessageBox()
-        self.__msgBox.setText("Permet de convertir un nombre soit de Kelvin vers Celcius, soit de Celcius vers Kelvin")
-        self.__msgBox.setWindowTitle("Aide")
 
         grid.addWidget(self.__print, 0,0 , 1,6)
         grid.addWidget(self.__ter, 1,0 , 1,6)
         grid.addWidget(self.__ip1, 2,1 , 1,1)
         grid.addWidget(self.__ip2, 2,0 , 1,1)
         grid.addWidget(self.__port1, 2,4 , 1,1)
-        grid.addWidget(self.__port2, 2,3 , 1, 1)
+        grid.addWidget(self.__port2, 2,3 , 1,1)
         grid.addWidget(self.__conn, 3,0 , 1,3)
         grid.addWidget(self.__send, 3,3 , 1,3)
-        grid.addWidget(self.__add, 4, 0, 1,6)
+        grid.addWidget(self.__add, 4,0, 1,6)
 
         self.__send.clicked.connect(self.send)
         self.__conn.clicked.connect(self.connection)
@@ -90,31 +85,36 @@ class MainWindow(QMainWindow):
         msg = Socket.get_msg(self.__soc)
         self.__ter.append(Socket.send(self.__soc, msg))
     def send(self):
-        try:
-            Socket.set_msg(self.__soc, self.__print.text())
-        except BrokenPipeError:
-            print("socket closed")
+        Socket.set_msg(self.__soc, self.__print.text())
         msg = Socket.get_msg(self.__soc)
         thread = threading.Thread(target=Socket.send, args=[self.__soc,msg])
         thread.start()
         self.__ter.append(Socket.send(self.__soc,msg))
         thread.join()
-        if msg == "clear":
+        if msg == "clear" or msg== "cls":
             self.__ter.clear()
     def set_title(self,title):
         self.setWindowTitle(title)
 
-list=[]
-nb=int(input("A comien de server voulez-vous vous connecter: "))
-for i in range(nb):
-    name = str(input(f"Veuillez nommer votre server n°{i+1}: "))
-    list.append(name)
-c=-500
-app = QApplication(sys.argv)
-for i in range(len(list)):
-    c += 600
-    list[i] = MainWindow()
-    list[i].setGeometry(c,100,400,400)
-    list[i].set_title(f"Server n°{i+1}")
-    list[i].show()
-app.exec()
+if __name__ == '__main__':
+    fichier = open("zoo.txt", "r")
+    lignes = fichier.readlines()
+    serv1=lignes[0].split(":")
+    serv2=lignes[1].split(":")
+    serv1_ip=serv1[0]
+    serv1_port=serv1[1]
+    serv2_ip=serv1[0]
+    serv2_port=serv1[1]
+    list=[]
+    for i in range(len(lignes)):
+        name = str(input(f"Veuillez nommer votre server n°{i+1}: "))
+        list.append(name)
+    c=-500
+    app = QApplication(sys.argv)
+    for i in range(len(list)):
+        c += 600
+        list[i] = MainWindow()
+        list[i].setGeometry(c,100,400,400)
+        list[i].set_title(f"Server n°{i+1}")
+        list[i].show()
+    app.exec()
