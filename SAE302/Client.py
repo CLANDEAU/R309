@@ -52,6 +52,8 @@ class MainWindow(QMainWindow):
         widget.setLayout(grid)
         self.setWindowTitle(self.__title)
         self.setGeometry(0, 0, 400,400)
+        count=0
+        self.__count=count
 
         self.__print = QLineEdit("OS") #Powershell:get-process
         self.__ter = QTextEdit()
@@ -59,10 +61,10 @@ class MainWindow(QMainWindow):
         self.__send = QPushButton("Envoyez le message au server")
         self.__send.setEnabled(False)
         self.__ip2 = QLabel("Entrez l'adresse IP de la machine:")
-        self.__ip1 = QLineEdit("127.0.0.1")
+        self.__ip1 = QLineEdit("")
         self.__port2 = QLabel("Entrez le port de la machine:")
-        self.__port1 = QLineEdit("8006")
-        self.__add = QPushButton("Ajouter un server")
+        self.__port1 = QLineEdit("")
+        self.__act = QPushButton("Actualiser")
 
         grid.addWidget(self.__print, 0,0 , 1,6)
         grid.addWidget(self.__ter, 1,0 , 1,6)
@@ -72,10 +74,13 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.__port2, 2,3 , 1,1)
         grid.addWidget(self.__conn, 3,0 , 1,3)
         grid.addWidget(self.__send, 3,3 , 1,3)
-        grid.addWidget(self.__add, 4,0, 1,6)
+        grid.addWidget(self.__act, 4,0, 1,6)
 
         self.__send.clicked.connect(self.send)
         self.__conn.clicked.connect(self.connection)
+        self.__act.clicked.connect(self.actualiser)
+
+
     def connection(self):
         port = int(self.__port1.text())
         host = str(self.__ip1.text())
@@ -95,19 +100,36 @@ class MainWindow(QMainWindow):
             self.__ter.clear()
     def set_title(self,title):
         self.setWindowTitle(title)
+    def actualiser(self):
+        fichier = open("zoo.txt", "r")
+        lignes = fichier.readlines()
+        list = []
+        ip = []
+        port = []
+        name1 = []
+        for i in range(len(lignes)):
+            name = f"Server n°{i + 1}"
+            list.append(name)
+        for val in range(len(list)):
+            list[val] = lignes[val].split(",")
+            ip_port = list[val][0]
+            ip_port1 = ip_port.split(":")
+            ip.append(ip_port1[0])
+            port.append(ip_port1[1])
+            name1.append(list[val][1])
+        self.__ip1.setText(ip[self.__count])
+        self.__port1.setText(port[self.__count])
+        self.setWindowTitle(name1[self.__count])
+        self.__count+=1
+
+        fichier.close()
 
 if __name__ == '__main__':
     fichier = open("zoo.txt", "r")
     lignes = fichier.readlines()
-    serv1=lignes[0].split(":")
-    serv2=lignes[1].split(":")
-    serv1_ip=serv1[0]
-    serv1_port=serv1[1]
-    serv2_ip=serv1[0]
-    serv2_port=serv1[1]
-    list=[]
+    list = []
     for i in range(len(lignes)):
-        name = str(input(f"Veuillez nommer votre server n°{i+1}: "))
+        name = f"Server n°{i + 1}"
         list.append(name)
     c=-500
     app = QApplication(sys.argv)
