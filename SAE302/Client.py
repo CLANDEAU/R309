@@ -35,11 +35,9 @@ class Socket:
         except:
             self.__message="Erreur de connexion"
         else:
-            if data == "ping 192.157.65.78":
-                print("Voici le résultat de la commmande ping 192.157.65.78:")
-                print(subprocess.Popen('ping 192.157.65.78'))
-            else:
-                return data
+            if message == "Disconnect":
+                    self.__client_socket.close()
+            return data
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -127,7 +125,7 @@ class MainWindow(QMainWindow):
         fichier.close()
 
         self.__send.clicked.connect(self.send)
-        self.__send1.clicked.connect(self.send)
+        self.__send1.clicked.connect(self.send1)
         self.__conn.clicked.connect(self.connection)
         self.__add.clicked.connect(self.ajouter_serv)
         self.__ip1.currentTextChanged.connect(self._Combobox_change)
@@ -143,6 +141,15 @@ class MainWindow(QMainWindow):
         self.__ter.append(Socket.send(self.__soc, msg))
     def send(self):
         Socket.set_msg(self.__soc, self.__print.text())
+        msg = Socket.get_msg(self.__soc)
+        thread = threading.Thread(target=Socket.send, args=[self.__soc,msg])
+        thread.start()
+        self.__ter.append(Socket.send(self.__soc,msg))
+        thread.join()
+        if msg == "clear" or msg== "cls":
+            self.__ter.clear()
+    def send1(self):
+        Socket.set_msg(self.__soc, self.__command.currentText())
         msg = Socket.get_msg(self.__soc)
         thread = threading.Thread(target=Socket.send, args=[self.__soc,msg])
         thread.start()
@@ -203,6 +210,10 @@ if __name__ == '__main__':
             for i in range(count2):
                 x+=600
                 y=600
+        if count2>6:
+            x = 100
+            for i in range(count2):
+                y=100
         list[i] = MainWindow()
         list[i].setGeometry(x,y,400,400)
         list[i].set_title(f"Server n°{i+1}")
