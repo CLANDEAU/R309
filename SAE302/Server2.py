@@ -10,12 +10,22 @@ def restart():
     os.execv(sys.executable, ['python'] + sys.argv)
 
 host="127.0.0.1"
-port= 8050
+port= 8040
 com=True
 server_socket = socket.socket()
 server_socket.bind((host, port))
 server_socket.listen(1)
 conn, address = server_socket.accept()
+OS = platform.uname()
+
+def ping(val:str):
+    if OS[0] == "Windows":
+        result = subprocess.check_output("ping "+val,shell=True).decode("cp850")
+        return result
+    else:
+        command = subprocess.run(["ping", val, "-c", "1", "-W", "2"], capture_output=True)
+        result = command.stdout.decode()
+        return result
 
 while com:
     try:
@@ -24,12 +34,11 @@ while com:
         print("Server éteint")
         com=False
     else:
-        OS = platform.uname()
-        if data == "disconnect":
+        if data == "Disconnect":
             conn, address = server_socket.accept()
-        elif data == "reset":
+        elif data == "Reset":
             restart()
-        elif data == "kill":
+        elif data == "Kill":
             conn.close()
         elif data == "clear":
             conn.send("clear".encode())
@@ -63,14 +72,14 @@ while com:
                 conn.send("Le système d'exploitation est incorrect.".encode())
         elif data == "DOS:dir":
             if OS[0] == "Windows":
-                command = subprocess.run(["-Command", "dir"], capture_output=True)
+                command = subprocess.run(["dir"], shell=True)
                 result = command.stdout.decode('windows-1252')
                 conn.send(f"Voici le résultat de la commmande dir: {result}".encode())
             else:
                 conn.send("Le système d'exploitation est incorrect.".encode())
         elif data == "DOS:mdir toto":
             if OS[0] == "Windows":
-                command = subprocess.run(["mdir", "toto"], capture_output=True)
+                command = subprocess.run(["mdir", "toto"], shell=True)
                 result = command.stdout.decode('windows-1252')
                 conn.send(f"Voici le résultat de la commmande mdir toto: {result}".encode())
             else:
@@ -79,13 +88,14 @@ while com:
             command = subprocess.run(["python", "--version"], capture_output=True)
             result=command.stderr.decode('windows-1252')
             conn.send(f"Voici le résultat de la commmande python --version: {result}".encode())
-        elif data == "ping 192.157.65.78":
-            if OS[0] == "Windows":
-                conn.send("ping 192.157.65.78".encode())
+        elif "ping" in data:
+            try:
+                data=data.split(" ")
+                result=ping(data[1])
+            except:
+                conn.send(f"Ping échoué".encode())
             else:
-                command = subprocess.run(["ping","192.157.65.78","-c","1","-W","2"],capture_output=True)
-                result=command.stdout.decode()
-                conn.send(f"Voici le résultat de la commmande ping 192.157.65.78: {result}".encode())
+                conn.send(result.encode())
         elif data=="xetyauibeabfa":
             conn.send("connecté".encode())
         else:
