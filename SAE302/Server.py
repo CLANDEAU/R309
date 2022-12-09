@@ -7,6 +7,7 @@ import os,sys
 def restart():
     print("restart now")
     print("...")
+    print("restarted")
     os.execv(sys.executable, ['python'] + sys.argv)
 
 host="127.0.0.1"
@@ -26,22 +27,21 @@ def ping(val:str):
         command = subprocess.run(["ping", val, "-c", "1", "-W", "2"], capture_output=True)
         result = command.stdout.decode()
         return result
-
 while com:
     try:
         data = conn.recv(1024).decode()
-    except OSError:
-        print("Server éteint")
-        com=False
+    except:
+        conn, address = server_socket.accept()
     else:
         if data == "Disconnect":
             conn, address = server_socket.accept()
+            com = False
         elif data == "Reset":
             restart()
         elif data == "Kill":
             conn.close()
-        elif data == "clear":
-            conn.send("clear".encode())
+            print("Server éteint")
+            com = False
         elif data == "OS":
             conn.send(f"La machine utilise le système d'exploitation: {OS[0]}".encode())
         elif data == "RAM":
@@ -72,16 +72,13 @@ while com:
                 conn.send("Le système d'exploitation est incorrect.".encode())
         elif data == "DOS:dir":
             if OS[0] == "Windows":
-                command = subprocess.run(["dir"], shell=True)
-                result = command.stdout.decode('windows-1252')
-                conn.send(f"Voici le résultat de la commmande dir: {result}".encode())
+                command = subprocess.check_output("dir" ,shell=True).decode("cp850").strip()
+                conn.send(f"Voici le résultat de la commmande dir: {command}".encode())
             else:
                 conn.send("Le système d'exploitation est incorrect.".encode())
-        elif data == "DOS:mdir toto":
+        elif "DOS:mkdir" in data:
             if OS[0] == "Windows":
-                command = subprocess.run(["mdir", "toto"], shell=True)
-                result = command.stdout.decode('windows-1252')
-                conn.send(f"Voici le résultat de la commmande mdir toto: {result}".encode())
+                conn.send(data.encode())
             else:
                 conn.send("Le système d'exploitation est incorrect.".encode())
         elif data == "python --version":

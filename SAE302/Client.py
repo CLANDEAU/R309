@@ -4,6 +4,7 @@ import subprocess
 from PyQt5 import QtCore , QtGui,QtWidgets
 from PyQt5.QtWidgets import *
 import sys
+import os
 
 class Socket:
     def __init__(self,host,port):
@@ -21,11 +22,18 @@ class Socket:
         self.__host = host
     def set_port(self,port):
         self.__port = port
+    def mkdir(salf,val: str):
+        try:
+            cmd = os.mkdir(val, 0o755)
+        except:
+            print("Dossier déjà présent")
+        else:
+            return cmd
     def connect(self):
         try:
             self.__client_socket.connect((self.__host, self.__port))
         except:
-            self.__message="erreur de connexion"
+            print("Server éteint")
         else:
             return True
     def send(self,message):
@@ -33,11 +41,16 @@ class Socket:
             self.__client_socket.send(message.encode())
             data = self.__client_socket.recv(100000).decode()
         except:
-            self.__message="Erreur de connexion"
+            print("Connexion fermée")
         else:
-            if message == "Disconnect":
-                    self.__client_socket.close()
+            if "DOS:mkdir" in data:
+                data=data.split(" ")
+                command = self.mkdir(data[1])
+                if command == "":
+                    self.__client_socket.send(f"Le dossier à bien été crée".encode())
             return data
+    def close(self):
+        self.__client_socket.close()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -129,7 +142,6 @@ class MainWindow(QMainWindow):
         self.__conn.clicked.connect(self.connection)
         self.__add.clicked.connect(self.ajouter_serv)
         self.__ip1.currentTextChanged.connect(self._Combobox_change)
-
     def connection(self):
         port = int(self.__port1.text())
         host = str(self.__ip1.currentText())
@@ -142,21 +154,27 @@ class MainWindow(QMainWindow):
     def send(self):
         Socket.set_msg(self.__soc, self.__print.text())
         msg = Socket.get_msg(self.__soc)
-        thread = threading.Thread(target=Socket.send, args=[self.__soc,msg])
+        if msg == "Disconnect":
+            self.__soc.close()
+        thread = threading.Thread(target=Socket.send, args=[self.__soc, msg])
         thread.start()
-        self.__ter.append(Socket.send(self.__soc,msg))
-        thread.join()
-        if msg == "clear" or msg== "cls":
-            self.__ter.clear()
+        try:
+            self.__ter.append(Socket.send(self.__soc,msg))
+        except:
+            print("Fichier déja crée")
+        else:
+            thread.join()
+            if msg == "clear" or msg== "cls":
+                self.__ter.clear()
     def send1(self):
         Socket.set_msg(self.__soc, self.__command.currentText())
         msg = Socket.get_msg(self.__soc)
+        if msg == "Disconnect":
+            self.__soc.close()
         thread = threading.Thread(target=Socket.send, args=[self.__soc,msg])
         thread.start()
         self.__ter.append(Socket.send(self.__soc,msg))
         thread.join()
-        if msg == "clear" or msg== "cls":
-            self.__ter.clear()
     def set_title(self,title):
         self.setWindowTitle(title)
     def _Combobox_change(self):
@@ -192,7 +210,8 @@ class MainWindow(QMainWindow):
         fichier.close()
 
 if __name__ == '__main__':
-    fichier = open("zoo.txt", "r")
+    txt=sys.argv[1]
+    fichier = open(txt, "r")
     lignes = fichier.readlines()
     list = []
     for i in range(len(lignes)):
