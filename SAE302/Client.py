@@ -22,32 +22,20 @@ class Socket:
         self.__host = host
     def set_port(self,port):
         self.__port = port
-    def mkdir(salf,val: str):
-        try:
-            cmd = os.mkdir(val, 0o755)
-        except:
-            print("Dossier déjà présent")
-        else:
-            return cmd
     def connect(self):
         try:
             self.__client_socket.connect((self.__host, self.__port))
         except:
             print("Server éteint")
         else:
-            return True
+            return None
     def send(self,message):
         try:
             self.__client_socket.send(message.encode())
             data = self.__client_socket.recv(100000).decode()
         except:
-            print("Connexion fermée")
+            return False
         else:
-            if "DOS:mkdir" in data:
-                data=data.split(" ")
-                command = self.mkdir(data[1])
-                if command == "":
-                    self.__client_socket.send(f"Le dossier à bien été crée".encode())
             return data
     def close(self):
         self.__client_socket.close()
@@ -57,6 +45,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         widget = QWidget()
         self.setCentralWidget(widget)
+        with open("Client.css","r") as set:
+            css = set.read()
+        app.setStyleSheet(css)
         title=""
         self.__title = title
         grid = QGridLayout()
@@ -110,7 +101,7 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.__add_port, 5,4 , 1,2)
         grid.addWidget(self.__add,6,0 , 1,6)
 
-        fichier = open("zoo.txt", "r")
+        fichier = open(str(sys.argv[1]), "r")
         lignes = fichier.readlines()
         list = []
         ip = []
@@ -149,32 +140,51 @@ class MainWindow(QMainWindow):
         self.__soc.connect()
         self.__send.setEnabled(True)
         self.__send1.setEnabled(True)
+        self.__conn.setEnabled(False)
         msg = Socket.get_msg(self.__soc)
-        self.__ter.append(Socket.send(self.__soc, msg))
+        try:
+            self.__ter.append(Socket.send(self.__soc, msg))
+        except:
+            self.__ter.append("Server éteint")
+            self.__conn.setEnabled(True)
     def send(self):
         Socket.set_msg(self.__soc, self.__print.text())
         msg = Socket.get_msg(self.__soc)
-        if msg == "Disconnect":
+        if msg.lower() == "disconnect":
             self.__soc.close()
+            self.__conn.setEnabled(True)
+        elif msg.lower() =="reset":
+            self.__conn.setEnabled(True)
+        elif msg.lower() == "kill":
+            self.__conn.setEnabled(True)
         thread = threading.Thread(target=Socket.send, args=[self.__soc, msg])
         thread.start()
         try:
             self.__ter.append(Socket.send(self.__soc,msg))
         except:
-            print("Fichier déja crée")
+            self.__ter.append("Connexion Fermée")
         else:
             thread.join()
-            if msg == "clear" or msg== "cls":
+            if msg.lower() == "clear" or msg.lower() == "cls":
                 self.__ter.clear()
     def send1(self):
         Socket.set_msg(self.__soc, self.__command.currentText())
         msg = Socket.get_msg(self.__soc)
-        if msg == "Disconnect":
+        if msg.lower() == "disconnect":
             self.__soc.close()
+            self.__conn.setEnabled(True)
+        elif msg.lower() == "reset":
+            self.__conn.setEnabled(True)
+        elif msg.lower() == "kill":
+            self.__conn.setEnabled(True)
         thread = threading.Thread(target=Socket.send, args=[self.__soc,msg])
         thread.start()
-        self.__ter.append(Socket.send(self.__soc,msg))
-        thread.join()
+        try:
+            self.__ter.append(Socket.send(self.__soc, msg))
+        except:
+            self.__ter.append("Connexion Fermée")
+        else:
+            thread.join()
     def set_title(self,title):
         self.setWindowTitle(title)
     def _Combobox_change(self):
@@ -205,7 +215,7 @@ class MainWindow(QMainWindow):
     def ajouter_serv(self):
         ip=self.__add_ip.text()
         port=self.__add_port.text()
-        fichier = open("zoo.txt", "a")
+        fichier = open(str(sys.argv[1]), "a")
         fichier.write(f"\n{ip}:{port}")
         fichier.close()
 
